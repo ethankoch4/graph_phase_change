@@ -281,14 +281,13 @@ def plot_save_scores(out_class_probs=[],
     plt.style.use('ggplot')
     # first plot : plot scores
     fig, ax = plt.subplots(figsize=(12, 8))
-    ax.set_title('Explore Scores Jump : Resampling Walks',color='black')
-    ax.set_ylabel('Bhamidi/Purity Scores',color='black')
-    ax.set_xlabel('Out-Class Probability',color='black')
+    ax.set_title('Explore Phase Change: Resampling Walks & SBM',color='black',fontsize=18)
+    ax.set_ylabel('Bhamidi/Purity Scores',color='black',fontsize=14)
+    ax.set_xlabel('Out-Class Probability',color='black',fontsize=14)
     ax.tick_params(axis='both',color='black')
     # set ticks to be the color black
     plt.setp(ax.get_xticklabels(), color='black')
     plt.setp(ax.get_yticklabels(), color='black')
-
 
     # plot scores as scatter plot first
     for i in range(len(out_class_probs)):
@@ -297,33 +296,35 @@ def plot_save_scores(out_class_probs=[],
         # bhamidi scores plot
         y = bhamidi_scores_plot[i]
         if i == 0:
-            ax.scatter([x]*len(y), y, alpha=0.55, marker='.', c='g', label='raw bhamidi scores')
+            ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='g', label='raw bhamidi scores')
         else:
-            ax.scatter([x]*len(y), y, alpha=0.55, marker='.', c='g')
+            ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='g')
            
         # purity scores plot
         y = purity_scores_plot[i]
         if i == 0:
-            ax.scatter([x]*len(y), y, alpha=0.55, marker='.', c='b', label='raw purity scores')
+            ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='b', label='raw purity scores')
         else:
-            ax.scatter([x]*len(y), y, alpha=0.55, marker='.', c='b')
+            ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='b')
+    ax.xaxis.set_ticks(np.arange(0.0, 1.1, 0.1)) # up to, but not including 1.1
+    ax.yaxis.set_ticks(np.arange(0.5, 1.1, 0.1)) # up to, but not including 1.1
     
     
     median_bhamidi, = ax.plot(out_class_probs, bhamidi_medians, '-', color='g', label='median bhamidi scores')
     median_purity, = ax.plot(out_class_probs, purity_medians, '-', color='b', label='median purity scores')
     # create the legend
-    legd = ax.legend(loc=3,fancybox=True)
+    legd = ax.legend(loc=3,fancybox=True,fontsize=12,scatterpoints=3)
     for text in legd.get_texts():
         text.set_color('black')
-    anchored_text = AnchoredText('''---------PARAMS---------
-walk length : {0}
-num of walks : {1}
-num of nodes : {2}
-num of classes : {3}
-in-class prob. : {4}
-iterations : {5}
-p : {6}
-q : {7}'''.format(walk_length, num_walks, num_nodes, n_classes, round(in_class_prob,2), iterations, round(p,2), round(q,2)),loc=4)
-    ax.add_artist(anchored_text)
+#     anchored_text = AnchoredText('''---------PARAMS---------
+# walk length : {0}
+# num of walks : {1}
+# num of nodes : {2}
+# num of classes : {3}
+# in-class prob. : {4}
+# iterations : {5}
+# p : {6}
+# q : {7}'''.format(walk_length, num_walks, num_nodes, n_classes, round(in_class_prob,2), iterations, round(p,2), round(q,2)),loc=4)
+#     ax.add_artist(anchored_text)
     plt.savefig(file_name+'.png')
     plt.show()
