@@ -1,4 +1,5 @@
 import json
+import time
 import warnings
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
@@ -98,6 +99,8 @@ def multiple_sbm_iterate(start = 30,
                         p = 1.0,
                         q = 1.0,
                         samples = 10):
+    print('At multiple_sbm_iterate(...)')
+    start_time = time.clock()
     # will be y-axis on plot
     bhamidi_scores_plot = []
     bhamidi_medians = []
@@ -135,8 +138,8 @@ def multiple_sbm_iterate(start = 30,
             
     bhamidi_medians = [np.median(bhamidi_scores_plot[j]) for j in range(len(bhamidi_scores_plot))]
     purity_medians = [np.median(purity_scores_plot[j]) for j in range(len(purity_scores_plot))]
-    
-    return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, out_class_probs 
+    print("Time elapsed while running 'multiple_sbm_iterate' function: {0}".format(time.clock()-start_time))
+    return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, out_class_probs
     
 
 def eval_multiple_walks(sbm, w_length=50, n_classes=2, num_walks=25, p=1, q=1, iterations=5):
@@ -155,6 +158,7 @@ def eval_multiple_walks(sbm, w_length=50, n_classes=2, num_walks=25, p=1, q=1, i
                     be recalculated every time the walks are regenerated
     '''
     print('At eval_multiple_walks(...)')
+    start_time = time.clock()
     bhamidi_scores = []
     purity_scores = []
     for i in range(iterations):
@@ -176,6 +180,7 @@ def eval_multiple_walks(sbm, w_length=50, n_classes=2, num_walks=25, p=1, q=1, i
                                 )
         bhamidi_scores.append(node_embeds.bhamidi_score)
         purity_scores.append(node_embeds.purity_score)
+    print("Time elapsed while running 'eval_multiple_walks' function: {0}".format(time.clock()-start_time))
     # both are of type : list
     return bhamidi_scores, purity_scores
 
@@ -191,6 +196,7 @@ def iterate_out_of_class_probs(start = 30,
                                p = 1.0,
                                q = 1.0):
     print('At iterate_out_of_class_probs(...)')
+    start_time = time.clock()
     # will be y-axis on plot
     bhamidi_scores_plot = []
     bhamidi_medians = []
@@ -227,6 +233,7 @@ def iterate_out_of_class_probs(start = 30,
         purity_scores_plot.append(purity_scores)
         purity_medians.append(np.median(purity_scores))
         out_class_probs.append(i)
+    print("Time elapsed while running 'iterate_out_of_class_probs' function: {0}".format(time.clock()-start_time))
     return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, out_class_probs
 
 def save_current_status(file_name = 'current_status_resample_walks',

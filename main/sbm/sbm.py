@@ -1,9 +1,13 @@
+import time
 import numpy as np
 import random
 
 class stochastic_block_model(object):
     def __init__(self, size, block_probabilities, num_classes):
+        print('At createA(...)')
+        start_time = time.clock()
         self.A, self.memberships = self.createA(size, block_probabilities, num_classes)
+        print("Time elapsed while running 'createA' function: {0}".format(time.clock()-start_time))
         
     def sample_stochastic_block_model(self, memberships, block_probabilities, undirected=True):
         """
