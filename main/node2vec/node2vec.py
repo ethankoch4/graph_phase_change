@@ -41,17 +41,17 @@ class node2vec(object):
         print('At preprocess_transition_probs(...)')
         start_time = time.clock()
         G.preprocess_transition_probs()
-        print("Time elapsed while running 'preprocess_transition_probs' function: {0}".format(time.clock()-start_time))
+        print("Time elapsed while running 'preprocess_transition_probs' function: {0}".format(round(time.clock()-start_time,8)))
 
         print('At simulate_walks(...)')
         start_time = time.clock()
         self.walks = G.simulate_walks(num_walks, walk_length)
-        print("Time elapsed while running 'simulate_walks' function: {0}".format(time.clock()-start_time))
+        print("Time elapsed while running 'simulate_walks' function: {0}".format(round(time.clock()-start_time,8)))
         
         print('At simulate_walks(...)')
         start_time = time.clock()
         self.model = self.learn_embeddings(self.walks)
-        print("Time elapsed while running 'learn_embeddings' function: {0}".format(time.clock()-start_time))
+        print("Time elapsed while running 'learn_embeddings' function: {0}".format(round(time.clock()-start_time,8)))
 
         if evaluate:
             print('At kmeans_evaluate(...)')
@@ -59,7 +59,7 @@ class node2vec(object):
             self.kmeans_evaluate(self.model,
                                 labels=labels,
                                 n_clusters=n_classes)
-            print("Time elapsed while running 'kmeans_evaluate' function: {0}".format(time.clock()-start_time))
+            print("Time elapsed while running 'kmeans_evaluate' function: {0}".format(round(time.clock()-start_time,8)))
 
     def read_graph(self, Adj_M):
         # only support undirected graphs as of now
@@ -78,6 +78,7 @@ class node2vec(object):
         from sklearn.cluster import KMeans
         from utilities import score_bhamidi
         from utilities import score_purity
+        from utilities import score_agreement
 
         if not labels == []:
             walks_data = embeddings.wv
@@ -86,3 +87,4 @@ class node2vec(object):
             kmeans = KMeans(n_clusters=n_clusters).fit(walks_data)
             self.bhamidi_score = score_bhamidi(labels, list(kmeans.labels_))
             self.purity_score = score_purity(labels, list(kmeans.labels_))
+            self.agreement_score = score_agreement(labels, list(kmeans.labels_))

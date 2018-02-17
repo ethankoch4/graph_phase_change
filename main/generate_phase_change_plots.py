@@ -9,7 +9,7 @@ def main():
 	import threading
 
 	in_class_probs = [0.8]
-	walk_lengths = [125,25,100,50]
+	walk_lengths = [5]
 	for walk_length in walk_lengths:
 		for in_class_prob in in_class_probs:
 			start_time = time.clock()
@@ -19,17 +19,17 @@ def main():
 			stop = 101 # up to, but not including
 			step = 1
 			walk_length = walk_length
-			num_walks = 25
-			num_nodes = 400
+			num_walks = 5
+			num_nodes = 20
 			n_classes = 2
 			in_class_prob = in_class_prob
 			# out_class_prob = 0.6
-			iterations = 1
-			samples = 2
+			iterations = 10
+			samples = 1
 			p = 1.0
 			q = 1.0
 			# for saving purposes
-			file_name = '2_sbms_evaluate_phase_change_{0}'.format(in_class_prob)
+			file_name = 'trial_evaluate_phase_change_{0}'.format(in_class_prob)
 
 			# bhamidi_scores_plot,\
 			# bhamidi_medians,\
@@ -50,6 +50,8 @@ def main():
 			bhamidi_medians, \
 			purity_scores_plot, \
 			purity_medians, \
+			agreement_scores_plot, \
+			agreement_medians, \
 			out_class_probs  = multiple_sbm_iterate(start = start,
 							                        stop = stop,
 							                        step = step,
@@ -62,7 +64,11 @@ def main():
 							                        p = p,
 							                        q = q,
 							                        samples = samples)
-
+			# because we don't currently want to plot bhamidi/purity scores
+			bhamidi_scores_plot = None
+			bhamidi_medians = None
+			purity_scores_plot = None
+			purity_medians = None
 			current_status = save_current_status(file_name = file_name,
 			                                        walk_length = walk_length,
 			                                        num_walks = num_walks,
@@ -76,6 +82,8 @@ def main():
 			                                        bhamidi_medians = bhamidi_medians,
 			                                        purity_scores_plot = purity_scores_plot,
 			                                        purity_medians = purity_medians,
+			                                        agreement_scores_plot = agreement_scores_plot,
+			                                        agreement_medians = agreement_medians,
 			                                        out_class_probs = out_class_probs)
 
 			plot_save_scores(file_name=file_name, **current_status)
