@@ -1,4 +1,4 @@
-import time
+
 import warnings
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
@@ -37,29 +37,13 @@ class node2vec(object):
         else:
             nx_G = self.read_graph(Adj_M)
         G = Node2VecGraph(nx_G, False, p, q)
-
-        print('At preprocess_transition_probs(...)')
-        start_time = time.clock()
         G.preprocess_transition_probs()
-        print("Time elapsed while running 'preprocess_transition_probs' function: {0}".format(round(time.clock()-start_time,8)))
-
-        print('At simulate_walks(...)')
-        start_time = time.clock()
         self.walks = G.simulate_walks(num_walks, walk_length)
-        print("Time elapsed while running 'simulate_walks' function: {0}".format(round(time.clock()-start_time,8)))
-        
-        print('At simulate_walks(...)')
-        start_time = time.clock()
         self.model = self.learn_embeddings(self.walks)
-        print("Time elapsed while running 'learn_embeddings' function: {0}".format(round(time.clock()-start_time,8)))
-
         if evaluate:
-            print('At kmeans_evaluate(...)')
-            start_time = time.clock()
             self.kmeans_evaluate(self.model,
                                 labels=labels,
                                 n_clusters=n_classes)
-            print("Time elapsed while running 'kmeans_evaluate' function: {0}".format(round(time.clock()-start_time,8)))
 
     def read_graph(self, Adj_M):
         # only support undirected graphs as of now

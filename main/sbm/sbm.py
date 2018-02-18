@@ -1,13 +1,16 @@
-import time
+import math
 import numpy as np
 import random
 
 class stochastic_block_model(object):
     def __init__(self, size, block_probabilities, num_classes):
-        print('At createA(...)')
-        start_time = time.clock()
         self.A, self.memberships = self.createA(size, block_probabilities, num_classes)
-        print("Time elapsed while running 'createA' function: {0}".format(time.clock()-start_time))
+        self.critical_p, \
+        self.avg_degree_in, \
+        self.avg_degree_out, \
+        self.detectable = self.undetectable_point(memberships=self.memberships, block_probabilities=block_probabilities)
+        self.is_recoverable = self.calculate_threshold(memberships=self.memberships, block_probabilities=block_probabilities)
+        self.epsilon = self.avg_degree_out / self.avg_degree_in
         
     def sample_stochastic_block_model(self, memberships, block_probabilities, undirected=True):
         """
@@ -33,7 +36,7 @@ class stochastic_block_model(object):
                 else:
                     adj_matrix[i,j] = 0
         if undirected:
-            adj_matrix = np.maximum( adj_matrix, adj_matrix.transpose() )
+            adj_matrix = np.maximum(adj_matrix, adj_matrix.transpose())
         return adj_matrix
 
 
@@ -90,3 +93,74 @@ class stochastic_block_model(object):
             label = labels[i]
             matrix_labels[i,label] = 1
         return matrix_labels
+
+    def undetectable_point(self, memberships=[], block_probabilities=[]):
+        """
+        Calculates the critical point at which the algorithm should not be able to differentiate between groups according to:
+        https://arxiv.org/pdf/1109.3041.pdf
+
+        Parameters
+        ----------
+        memberships: a vector of length n denoting the community memberships
+        block_probabilities: a K x K symmetric matrix whose i,jth entry is the probability of an edge from community i to community j
+
+        Output
+        ------
+        critical_point: type float between 0.0 and 1.0
+        avg_degree_in: mean degree of within-group connections
+        avg_degree_out: mean degree of out-of-group connections
+        detectable: boolean of whether the sbm's communities should be recoverable
+        """
+        group_totals = [0 for _ in range(len(set(memberships)))]
+        for mem in memberships:
+            group_totals[mem]+=1
+        assert len(group_totals) == len(block_probabilities),"Number of groups must be equal to number of groups in block_probabilities"
+        
+        num_nodes = sum(group_totals)
+        num_groups = len(group_totals)
+        avg_degree = 0
+        avg_degree_in = 0
+        avg_degree_out = 0
+        
+        for a,row_group in enumerate(block_probabilities):
+            for b,column_value in enumerate(row_group):
+                # from paper
+                avg_degree_ab = num_nodes*column_value
+                proportion_in_a = group_totals[a]/num_nodes
+                proportion_in_b = group_totals[b]/num_nodes
+                if a==b:
+                    avg_degree_in += avg_degree_ab*proportion_in_a*proportion_in_b
+                else:
+                    avg_degree_out += avg_degree_ab*proportion_in_a*proportion_in_b
+
+        assert avg_degree_in > avg_degree_out,"avg_degree_in must be greater than avg_degree_out -- see paper"
+        avg_degree = avg_degree_in + avg_degree_out
+        # FROM PAPER: p_c = [c + (q-1)*math.sqrt(c)]/(q*c), when c_in > c_out
+        critical_p = (avg_degree + (num_groups - 1)*math.sqrt(avg_degree))/(num_groups*avg_degree)
+        detectable = round(avg_degree_in-avg_degree_out,8) > round(num_groups*math.sqrt(avg_degree),8)
+        print('DETECTABLE:',detectable)
+        return critical_p, avg_degree_in, avg_degree_out, detectable
+
+    def calculate_threshold(self,block_probabilities=[],memberships=[]):
+        """
+        Calculates whether the current sbm's communities are recoverable according to:
+        https://arxiv.org/pdf/1405.3267.pdf
+
+        Parameters
+        ----------
+        memberships: a vector of length n denoting the community memberships
+        block_probabilities: a K x K symmetric matrix whose i,jth entry is the probability of an edge from community i to community j
+
+        Output
+        ------
+        is_recoverable: boolean of whether the sbm's communities should be recoverable
+        """
+        assert block_probabilities[0,1]==block_probabilities[1,0],"block_probabilities must be symmetric!"
+        assert block_probabilities[0,0]==block_probabilities[1,1],"block_probabilities must be symmetric!"
+        num_nodes = len(memberships)
+        alpha = num_nodes*block_probabilities[0,0]/math.log(num_nodes)
+        beta = num_nodes*block_probabilities[1,0]/math.log(num_nodes)
+        assert alpha > beta,"required that alpha is greater than beta (a.k.a. graph is assortative)"
+        is_recoverable = ((alpha + beta)/2 - math.sqrt(alpha*beta)) > 1
+        print('RECOVERABLE:',is_recoverable)
+        return is_recoverable

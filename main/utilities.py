@@ -1,5 +1,4 @@
 import json
-import time
 import warnings
 import itertools
 warnings.filterwarnings('ignore')
@@ -33,7 +32,7 @@ def score_bhamidi(memberships, predicted_memberships):
             if actual_match == predicted_match:
                 score += 1
     #convert to percent of total vertex pairs
-    score = score/(vertex_count*vertex_count)
+    score = score / (vertex_count*vertex_count)
     return score
 
 
@@ -81,7 +80,7 @@ def score_purity(memberships, predicted_memberships):
         score += max_intersection
 
     #divide score by total vertex count
-    score = score/num_nodes
+    score = score / num_nodes
     return score
 
 def score_agreement(y, y_hat):
@@ -94,7 +93,6 @@ def score_agreement(y, y_hat):
     output variable
     score - agreement score
     '''
-    max_score = 0
     relabelings = create_relabelings(y_hat)
     y = np.array(y)
     return max([np.sum(y == relabeling)/len(y) for relabeling in relabelings])
@@ -140,8 +138,6 @@ def multiple_sbm_iterate(start = 30,
                         p = 1.0,
                         q = 1.0,
                         samples = 10):
-    print('At multiple_sbm_iterate(...)')
-    start_time = time.clock()
     # will be y-axis on plot
     bhamidi_scores_plot = []
     bhamidi_medians = []
@@ -149,8 +145,11 @@ def multiple_sbm_iterate(start = 30,
     purity_medians = []
     agreement_scores_plot = []
     agreement_medians = []
-    # will be x-axis on plot
     out_class_probs = []
+    # will be x-axis on plot
+    epsilons = []
+    critical_point = None
+    recoverable_point = None
     
     first_iter = True
     for i in range(samples):
@@ -160,7 +159,10 @@ def multiple_sbm_iterate(start = 30,
         _1,\
         tmp_agreement_scores_plot,\
         _2,\
-        tmp_out_class_probs = iterate_out_of_class_probs(start = start,
+        tmp_out_class_probs,\
+        tmp_epsilons,\
+        tmp_critical_point,\
+        tmp_recoverable_point = iterate_out_of_class_probs(start = start,
                                         stop = stop,
                                         step = step,
                                         walk_length = walk_length,
@@ -171,23 +173,26 @@ def multiple_sbm_iterate(start = 30,
                                         iterations = iterations,
                                         p = p,
                                         q = q)
-
         if first_iter:
             bhamidi_scores_plot = tmp_bhamidi_scores_plot
             purity_scores_plot = tmp_purity_scores_plot
             agreement_scores_plot = tmp_agreement_scores_plot
             out_class_probs = tmp_out_class_probs
+            epsilons = tmp_epsilons
             first_iter = False
         else:
             bhamidi_scores_plot = [bhamidi_scores_plot[j]+tmp_bhamidi_scores_plot[j] for j in range(len(bhamidi_scores_plot))]
             purity_scores_plot = [purity_scores_plot[j]+tmp_purity_scores_plot[j] for j in range(len(purity_scores_plot))]
             agreement_scores_plot = [agreement_scores_plot[j]+tmp_agreement_scores_plot[j] for j in range(len(agreement_scores_plot))]
+        if tmp_critical_point is not None:
+            critical_point = tmp_critical_point
+        if tmp_recoverable_point is not None:
+            recoverable_point = tmp_recoverable_point
             
     bhamidi_medians = [np.median(bhamidi_scores_plot[j]) for j in range(len(bhamidi_scores_plot))]
     purity_medians = [np.median(purity_scores_plot[j]) for j in range(len(purity_scores_plot))]
     agreement_medians = [np.median(agreement_scores_plot[j]) for j in range(len(agreement_scores_plot))]
-    print("Time elapsed while running 'multiple_sbm_iterate' function: {0}".format(round(time.clock()-start_time,8)))
-    return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, agreement_scores_plot, agreement_medians, out_class_probs
+    return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, agreement_scores_plot, agreement_medians, out_class_probs, epsilons, critical_point, recoverable_point
     
 
 def eval_multiple_walks(sbm, w_length=50, n_classes=2, num_walks=25, p=1, q=1, iterations=5):
@@ -202,11 +207,13 @@ def eval_multiple_walks(sbm, w_length=50, n_classes=2, num_walks=25, p=1, q=1, i
     num_walks : number of node2vec walks to generate per node in graph object
     p : Return parameter; lower values result in more "local" walks
     q : In-out parameter; lower values result in more Depth-First Search behaving walks
-    iterations : number of times the node2vec walks should be regenerated, understanding that the node embeddings must
-                    be recalculated every time the walks are regenerated
+
+    Output
+    ------
+    bhamidi_scores: a list of floats
+    purity_scores: a list of floats
+    agreement_scores: a list of floats
     '''
-    print('At eval_multiple_walks(...)')
-    start_time = time.clock()
     bhamidi_scores = []
     purity_scores = []
     agreement_scores = []
@@ -230,8 +237,7 @@ def eval_multiple_walks(sbm, w_length=50, n_classes=2, num_walks=25, p=1, q=1, i
         bhamidi_scores.append(node_embeds.bhamidi_score)
         purity_scores.append(node_embeds.purity_score)
         agreement_scores.append(node_embeds.agreement_score)
-    print("Time elapsed while running 'eval_multiple_walks' function: {0}".format(round(time.clock()-start_time,8)))
-    # both are of type : list
+    # all are of type : list
     return bhamidi_scores, purity_scores, agreement_scores
 
 def iterate_out_of_class_probs(start = 30,
@@ -245,8 +251,6 @@ def iterate_out_of_class_probs(start = 30,
                                iterations = 10,
                                p = 1.0,
                                q = 1.0):
-    print('At iterate_out_of_class_probs(...)')
-    start_time = time.clock()
     # will be y-axis on plot
     bhamidi_scores_plot = []
     bhamidi_medians = []
@@ -254,18 +258,15 @@ def iterate_out_of_class_probs(start = 30,
     purity_medians = []
     agreement_scores_plot = []
     agreement_medians = []
-    # will be x-axis on plot
     out_class_probs = []
+    # will be x-axis on plot
+    epsilons = []
+    critical_point = None
+    recoverable_point = None
 
-    iteration_counter = 1
     for i in range(start, stop, step):
-        # keep track of where the program is:
-        if iteration_counter%5==0:
-            print('Currently at iteration : {0}'.format(iteration_counter))
-
-        iteration_counter += 1
         # change i into a probability
-        i *= 0.01
+        i *= 0.001
         # i will become out_class_prob
         # in_class_prob is static
         block_probs = make_block_probs(in_class_prob=in_class_prob, out_class_prob=i)
@@ -287,8 +288,16 @@ def iterate_out_of_class_probs(start = 30,
         agreement_scores_plot.append(agreement_scores)
         agreement_medians.append(np.median(agreement_scores))
         out_class_probs.append(i)
-    print("Time elapsed while running 'iterate_out_of_class_probs' function: {0}".format(round(time.clock()-start_time,8)))
-    return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, agreement_scores_plot, agreement_medians, out_class_probs
+        epsilons.append(sbm.epsilon)
+        # first point at which sbm is not recoverable
+        if not sbm.detectable and not isinstance(critical_point,float):
+            critical_point = float(sbm.epsilon)
+            print(sbm.critical_p)
+        # first point at which sbm is not recoverable
+        if not sbm.is_recoverable and not isinstance(recoverable_point,float):
+            recoverable_point = float(sbm.epsilon)
+            print(sbm.critical_p)
+    return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, agreement_scores_plot, agreement_medians, out_class_probs, epsilons, critical_point, recoverable_point
 
 def save_current_status(file_name = 'current_status_resample_walks',
                         out_class_probs=[],
@@ -305,7 +314,10 @@ def save_current_status(file_name = 'current_status_resample_walks',
                         in_class_prob = 'N/a',
                         iterations = 'N/a',
                         p = 'N/a',
-                        q = 'N/a'):
+                        q = 'N/a',
+                        epsilons='N/a',
+                        critical_point='N/a',
+                        recoverable_point='N/a'):
     # saving current status
     current_status = {
                     'iterations' : iterations,
@@ -322,14 +334,17 @@ def save_current_status(file_name = 'current_status_resample_walks',
                     'purity_medians' : purity_medians,
                     'agreement_scores_plot' : agreement_scores_plot,
                     'agreement_medians' : agreement_medians,
-                    'out_class_probs' : out_class_probs
+                    'out_class_probs' : out_class_probs,
+                    'epsilons' : epsilons,
+                    'critical_point' : critical_point,
+                    'recoverable_point' : recoverable_point
                     }
     # save to file (as json, obviously)
     with open(file_name+'.json', 'w') as fp:
         json.dump(current_status, fp)
     return current_status
 
-def plot_save_scores(out_class_probs=[],
+def plot_save_scores(epsilons=[],
                      bhamidi_scores_plot=None,
                      purity_scores_plot=None,
                      agreement_scores_plot=None,
@@ -344,37 +359,40 @@ def plot_save_scores(out_class_probs=[],
                      in_class_prob = 'N/a',
                      iterations = 'N/a',
                      p = 'N/a',
-                     q = 'N/a'):
-    plt.style.use('ggplot')
+                     q = 'N/a',
+                     critical_point='N/a',
+                     recoverable_point='N/a'
+                     out_class_probs=[]):
+    plt.style.use('fivethirtyeight')
     # first plot : plot scores
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.set_title('Explore Phase Change: Resampling Walks & SBM',color='black',fontsize=18)
     ax.set_ylabel('Scores',color='black',fontsize=14)
-    ax.set_xlabel('Out-Class Probability',color='black',fontsize=14)
+    ax.set_xlabel('Epsilon (c_out/c_in)',color='black',fontsize=14)
     ax.tick_params(axis='both',color='black')
     # set ticks to be the color black
     plt.setp(ax.get_xticklabels(), color='black')
     plt.setp(ax.get_yticklabels(), color='black')
 
     # plot scores as scatter plot first
-    for i in range(len(out_class_probs)):
-        x = out_class_probs[i]
+    for i in range(len(epsilons)):
+        x = epsilons[i]
 
         if isinstance(bhamidi_scores_plot,list):
             # bhamidi scores plot
             y = bhamidi_scores_plot[i]
             if i == 0:
-                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='g', label='raw bhamidi scores')
+                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='c', label='raw bhamidi scores')
             else:
-                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='g')
+                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='c')
         
         if isinstance(purity_scores_plot,list):
             # purity scores plot
             y = purity_scores_plot[i]
             if i == 0:
-                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='b', label='raw purity scores')
+                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='y', label='raw purity scores')
             else:
-                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='b')
+                ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='y')
 
         if isinstance(agreement_scores_plot,list):
             # agreement scores plot
@@ -388,11 +406,17 @@ def plot_save_scores(out_class_probs=[],
     ax.yaxis.set_ticks(np.arange(0.5, 1.1, 0.1)) # up to, but not including 1.1
     
     if isinstance(bhamidi_scores_plot,list):
-        median_bhamidi, = ax.plot(out_class_probs, bhamidi_medians, '-', color='g', label='median bhamidi scores')
+        median_bhamidi, = ax.plot(epsilons, bhamidi_medians, '-', color='c', label='median bhamidi scores')
     if isinstance(purity_scores_plot,list):
-        median_purity, = ax.plot(out_class_probs, purity_medians, '-', color='b', label='median purity scores')
+        median_purity, = ax.plot(epsilons, purity_medians, '-', color='y', label='median purity scores')
     if isinstance(agreement_scores_plot,list):
-        median_agreement, = ax.plot(out_class_probs, agreement_medians, '-', color='r', label='median agreement scores')
+        median_agreement, = ax.plot(epsilons, agreement_medians, '-', color='r', label='median agreement scores')
+    # the undetectable point
+    if (not isinstance(critical_point,str)) and (critical_point is not None):
+        ax.axvline(critical_point, c='b', label='Undetectable Threshold')
+    # the undetectable point
+    if (not isinstance(recoverable_point,str)) and (recoverable_point is not None):
+        ax.axvline(recoverable_point, c='m', label='Unrecoverable Threshold')
     # create the legend
     legd = ax.legend(loc=3,fancybox=True,fontsize=12,scatterpoints=3)
     for text in legd.get_texts():
@@ -408,4 +432,4 @@ p : {6}
 q : {7}'''.format(walk_length, num_walks, num_nodes, n_classes, round(in_class_prob,2), iterations, round(p,2), round(q,2)),loc=7, bbox_to_anchor=(1, 0.5))
     ax.add_artist(anchored_text)
     plt.savefig(file_name+'.png')
-    plt.show()
+    plt.close()
