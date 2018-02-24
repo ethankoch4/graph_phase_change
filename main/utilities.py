@@ -361,7 +361,7 @@ def plot_save_scores(epsilons=[],
                      p = 'N/a',
                      q = 'N/a',
                      critical_point='N/a',
-                     recoverable_point='N/a'
+                     recoverable_point='N/a',
                      out_class_probs=[]):
     plt.style.use('fivethirtyeight')
     # first plot : plot scores
