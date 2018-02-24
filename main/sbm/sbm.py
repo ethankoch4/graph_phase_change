@@ -157,6 +157,7 @@ class stochastic_block_model(object):
         """
         assert block_probabilities[0,1]==block_probabilities[1,0],"block_probabilities must be symmetric!"
         assert block_probabilities[0,0]==block_probabilities[1,1],"block_probabilities must be symmetric!"
+        assert len(block_probabilities)==2,"we require number of sbm classes to be 2 for now"
         num_nodes = len(memberships)
         alpha = num_nodes*block_probabilities[0,0]/math.log(num_nodes)
         beta = num_nodes*block_probabilities[1,0]/math.log(num_nodes)
