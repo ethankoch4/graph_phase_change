@@ -7,7 +7,7 @@ def main():
     import numpy as np
 
     in_class_probs = [0.8]
-    walk_length = [arg for arg in sys.argv[1:]]
+    walk_lengths = [int(arg) for arg in sys.argv[1:]]
     areas_under_curve = {}
     for walk_length in walk_lengths:
         for in_class_prob in in_class_probs:
@@ -17,8 +17,8 @@ def main():
             stop = 800 # up to, but not including
             step = 8
             walk_length = walk_length
-            num_walks = 20
-            num_nodes = 100
+            num_walks = 8
+            num_nodes = 50
             n_classes = 2
             in_class_prob = in_class_prob
             # out_class_prob = 0.6

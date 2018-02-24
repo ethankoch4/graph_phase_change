@@ -6,6 +6,8 @@ warnings.simplefilter('ignore')
 import numpy as np
 from sbm.sbm import stochastic_block_model
 from node2vec.node2vec import node2vec
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib.offsetbox import AnchoredText
 
 import matplotlib.pyplot as plt
@@ -397,6 +399,7 @@ def plot_save_scores(epsilons=[],
         if isinstance(agreement_scores_plot,list):
             # agreement scores plot
             y = agreement_scores_plot[i]
+            y = [1 if ag_score > 0.5 else 0 for ag_score in y]
             if i == 0:
                 ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='r', label='raw agreement scores')
             else:
@@ -411,6 +414,8 @@ def plot_save_scores(epsilons=[],
         median_purity, = ax.plot(epsilons, purity_medians, '-', color='y', label='median purity scores')
     if isinstance(agreement_scores_plot,list):
         median_agreement, = ax.plot(epsilons, agreement_medians, '-', color='r', label='median agreement scores')
+        prop_success = [sum([v>0.5 for v in tmp_ag_scores])/len(tmp_ag_scores) for tmp_ag_scores in agreement_scores_plot]
+        plot_prop_success, = ax.plot(epsilons, prop_success, '-', color='g', label='Proportion of Successful Iterations')
     # the undetectable point
     if (not isinstance(critical_point,str)) and (critical_point is not None):
         ax.axvline(critical_point, c='b', label='Undetectable Threshold')
