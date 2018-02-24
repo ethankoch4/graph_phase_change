@@ -17,8 +17,8 @@ def main():
             stop = 800 # up to, but not including
             step = 8
             walk_length = walk_length
-            num_walks = 8
-            num_nodes = 50
+            num_walks = 75
+            num_nodes = 400
             n_classes = 2
             in_class_prob = in_class_prob
             # out_class_prob = 0.6

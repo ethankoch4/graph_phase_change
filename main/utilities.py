@@ -406,7 +406,7 @@ def plot_save_scores(epsilons=[],
                 ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='r')
 
     ax.xaxis.set_ticks(np.arange(0.0, 1.1, 0.1)) # up to, but not including 1.1
-    ax.yaxis.set_ticks(np.arange(0.5, 1.1, 0.1)) # up to, but not including 1.1
+    ax.yaxis.set_ticks(np.arange(0.0, 1.1, 0.1)) # up to, but not including 1.1
     
     if isinstance(bhamidi_scores_plot,list):
         median_bhamidi, = ax.plot(epsilons, bhamidi_medians, '-', color='c', label='median bhamidi scores')
@@ -428,8 +428,6 @@ def plot_save_scores(epsilons=[],
         text.set_color('black')
     anchored_text = AnchoredText('''---------PARAMS---------
 walk length : {0}
-num of walks : {1}
-num of nodes : {2}
 num of classes : {3}
 in-class prob. : {4}
 iterations : {5}
