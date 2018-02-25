@@ -23,7 +23,7 @@ def main():
             in_class_prob = in_class_prob
             # out_class_prob = 0.6
             iterations = 1
-            samples = 2
+            samples = 20
             p = 1.0
             q = 1.0
             # for saving purposes

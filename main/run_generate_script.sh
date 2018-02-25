@@ -14,7 +14,7 @@ do
     COMMAND="python3 generate_phase_change_plots.py "
     COMMAND+="$var"
     echo "$COMMAND"
-    sbatch -o "$var".log -t 3-12 --job-name="$var" --wrap="$COMMAND"
+    sbatch -o "$var".log -t 6-12  --job-name="$var" --wrap="$COMMAND"
     var=$(($var+$step))
 done
 echo "COMPLETED GENERATE_PLOTS PYTHON SCRIPT"
