@@ -1,5 +1,7 @@
 def main():
     import sys
+    import os
+
     from utilities import iterate_out_of_class_probs, save_current_status, plot_save_scores, multiple_sbm_iterate, score_auc
     import warnings
     warnings.filterwarnings('ignore')
@@ -27,7 +29,10 @@ def main():
             p = 1.0
             q = 1.0
             # for saving purposes
-            file_name = 'trial_evaluate_phase_change_{0}_{1}'.format(in_class_prob,walk_length)
+            file_name = 'q_{0}_walk_len_{1}'.format(in_class_prob,walk_length)
+            if os.path.isfile('../plots/'+file_name+'.png') or os.path.isfile('../data/'+file_name+'.json'):
+                print('SIMULATION HAS BEEN PERFORMED. SKIPPING.')
+                raise ValueError('Simulation has been run before. Change file_name if wanting to run again.')
 
             # bhamidi_scores_plot,\
             # bhamidi_medians,\
