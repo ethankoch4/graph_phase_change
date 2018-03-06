@@ -95,9 +95,16 @@ def score_agreement(y, y_hat):
     output variable
     score - agreement score
     '''
-    relabelings = create_relabelings(y_hat)
-    y = np.array(y)
-    return max([np.sum(y == relabeling)/len(y) for relabeling in relabelings])
+    max_score = 0.0
+    lookups = itertools.permutations(set(y))
+    for lookup in lookups:
+        lookup = np.array(lookup)
+        relabeling = np.array(lookup[y])
+        score = float(np.sum(y == relabeling) / len(y))
+        # record if the largest so far
+        if score > max_score:
+            max_score = score
+    return max_score
 
 def score_auc(x,y):
     '''
@@ -106,23 +113,6 @@ def score_auc(x,y):
     y - vector of y values
     '''
     return np.trapz(y,x=x)
-
-def create_relabelings(y):
-    '''
-    calculates possible of permutations of labels of predicted labels of verticies
-    i.e. maintain community association within vector but changes the label values
-
-    input variables
-    y - relabelings of vertices
-    output variable
-    relabeling - possible relabelings of y
-    '''
-    lookups = list(set(itertools.permutations(set(y))))
-    relabelings = []
-    for lookup in lookups:
-        lookup = np.array(lookup)
-        relabelings.append(np.array(lookup[y]))
-    return relabelings
 
 def make_block_probs(in_class_prob=0.5, out_class_prob=0.5):
     return np.array([[in_class_prob, out_class_prob],
