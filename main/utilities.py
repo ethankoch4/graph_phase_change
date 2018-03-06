@@ -114,6 +114,23 @@ def score_auc(x,y):
     '''
     return np.trapz(y,x=x)
 
+def get_empirical_threshold(epsilons=[], scores=[], PROP_SUCCESS_CUT_OFF=0.75, SCORE_CUT_OFF=0.75):
+    '''
+    calculates the epmirical threshold using a list of lists of scores
+    scores - vector of vectors full of scores
+    PROP_SUCCESS_CUT_OFF - proportion of iterations that are successful above this will be considered 'successful' epsilon values
+    SCORE_CUT_OFF - scores greater than this are considered 'successful'
+    '''
+    assert len(epsilons)==len(scores), "must have an epsilon for every score and vice versa -> must be same length!"
+    # store all scores to find argmax_epsilon later on
+    prop_successes = []
+    for score_list in scores:
+        # record the proportion that are successful
+        successes = [1 if score > SCORE_CUT_OFF else 0 for score in score_list]
+        prop_success = sum(successes) / len(successes)
+        prop_successes.append(prop_success)
+    return max([ep for ep, p_s in zip(epsilons, prop_successes) if p_s > PROP_SUCCESS_CUT_OFF], default=None)
+
 def make_block_probs(in_class_prob=0.5, out_class_prob=0.5):
     return np.array([[in_class_prob, out_class_prob],
                      [out_class_prob, in_class_prob]])
@@ -354,11 +371,14 @@ def plot_save_scores(epsilons=[],
                      q = 'N/a',
                      critical_point='N/a',
                      recoverable_point='N/a',
-                     out_class_probs=[]):
+                     out_class_probs=[],
+                     PROP_SUCCESS_CUT_OFF=0.75,
+                     SCORE_CUT_OFF=0.75,
+                     display=False):
     plt.style.use('fivethirtyeight')
     # first plot : plot scores
     fig, ax = plt.subplots(figsize=(12, 8))
-    ax.set_title('Explore Phase Change: Resampling Walks & SBM',color='black',fontsize=18)
+    ax.set_title('Explore Phase Change: Walk Length = {0}'.format(walk_length),color='black',fontsize=18)
     ax.set_ylabel('Scores',color='black',fontsize=14)
     ax.set_xlabel('Epsilon (c_out/c_in)',color='black',fontsize=14)
     ax.tick_params(axis='both',color='black')
@@ -366,6 +386,7 @@ def plot_save_scores(epsilons=[],
     plt.setp(ax.get_xticklabels(), color='black')
     plt.setp(ax.get_yticklabels(), color='black')
 
+    prop_successes = []
     # plot scores as scatter plot first
     for i in range(len(epsilons)):
         x = epsilons[i]
@@ -389,11 +410,13 @@ def plot_save_scores(epsilons=[],
         if isinstance(agreement_scores_plot,list):
             # agreement scores plot
             y = agreement_scores_plot[i]
-            y = [1 if ag_score > 0.5 else 0 for ag_score in y]
             if i == 0:
                 ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='r', label='raw agreement scores')
             else:
                 ax.scatter([x]*len(y), y, alpha=0.4, marker='.', c='r')
+            prop_success = [1 if val > SCORE_CUT_OFF else 0 for val in agreement_scores_plot[i]]
+            prop_success = sum(prop_success) / len(prop_success)
+            prop_successes.append(prop_success)
 
     ax.xaxis.set_ticks(np.arange(0.0, 1.1, 0.1)) # up to, but not including 1.1
     ax.yaxis.set_ticks(np.arange(0.0, 1.1, 0.1)) # up to, but not including 1.1
@@ -404,14 +427,22 @@ def plot_save_scores(epsilons=[],
         median_purity, = ax.plot(epsilons, purity_medians, '-', color='y', label='median purity scores')
     if isinstance(agreement_scores_plot,list):
         median_agreement, = ax.plot(epsilons, agreement_medians, '-', color='r', label='median agreement scores')
-        prop_success = [sum([v>0.5 for v in tmp_ag_scores])/len(tmp_ag_scores) for tmp_ag_scores in agreement_scores_plot]
-        plot_prop_success, = ax.plot(epsilons, prop_success, '-', color='g', label='Proportion of Successful Iterations')
+        plot_prop_success, = ax.plot(epsilons, prop_successes, '-', color='g', label='Proportion of Successful Iterations')
+    # get empirical_threshold
+    last_prop_success = get_empirical_threshold(epsilons=epsilons,
+                                                scores=agreement_scores_plot,
+                                                PROP_SUCCESS_CUT_OFF=PROP_SUCCESS_CUT_OFF,
+                                                SCORE_CUT_OFF=SCORE_CUT_OFF)
     # the undetectable point
     if (not isinstance(critical_point,str)) and (critical_point is not None):
         ax.axvline(critical_point, c='b', label='Undetectable Threshold')
     # the undetectable point
     if (not isinstance(recoverable_point,str)) and (recoverable_point is not None):
-        ax.axvline(recoverable_point, c='m', label='Unrecoverable Threshold')
+        ax.axvline(recoverable_point, c='c', label='Unrecoverable Threshold')
+    # last successful epsilon value
+    if last_prop_success is not None:
+        ax.axvline(last_prop_success, c='m', label='Empirical Threshold')
+
     # create the legend
     legd = ax.legend(loc=3,fancybox=True,fontsize=12,scatterpoints=3)
     for text in legd.get_texts():
@@ -424,5 +455,52 @@ iterations : {5}
 p : {6}
 q : {7}'''.format(walk_length, num_walks, num_nodes, n_classes, round(in_class_prob,2), iterations, round(p,2), round(q,2)),loc=7, bbox_to_anchor=(1, 0.5))
     ax.add_artist(anchored_text)
-    plt.savefig(file_name+'.png')
+    if display:
+        plt.show()
+    else:
+        if ('.png' not in file_name) and ('.jp' not in file_name) and ('.pdf' not in file_name):
+            file_name = file_name+'.png'
+        plt.savefig(file_name)
+    plt.close()
+
+def plot_vs_parameter(file_name='walk_len_plot', param_values={}, y_values={}, display=False):
+    '''
+    plot parameter vs list of y's; ex: empirical threshold vs. walk_length
+    param_values - dict with single entry; key is name of param
+    y_values - dict of lists of y values to plot (all between 0 and 1), key is name of Y value
+    '''
+    plt.style.use('fivethirtyeight')
+    # first plot : plot scores
+    fig, ax = plt.subplots(figsize=(12, 8))
+    y_title = ', '.join(['{'+str(i)+'}' for i in range(len(y_values.keys()))])
+    x_title = list(param_values)[0]
+    title = y_title + ' vs. ' + x_title
+    ax.set_title(title.format(*list(y_values)),color='black',fontsize=18)
+    ax.set_ylabel(y_title.format(*list(y_values)),color='black',fontsize=14)
+    ax.set_xlabel(x_title,color='black',fontsize=14)
+    ax.tick_params(axis='both',color='black')
+    # set ticks to be the color black
+    plt.setp(ax.get_xticklabels(), color='black')
+    plt.setp(ax.get_yticklabels(), color='black')
+
+    ax.xaxis.set_ticks(np.arange(0, max(param_values[list(param_values)[0]])+5, 5)) # up to, but not including
+    ax.yaxis.set_ticks(np.arange(0, 1.1, 0.1)) # up to, but not including
+    # plot all y values
+    x = param_values[list(param_values)[0]]
+    colors = ['g','r','m','b','c','y']
+    plot_dict = {}
+    for i,y_key in enumerate(list(y_values.keys())):
+        plot_dict[y_key], = ax.plot(x, y_values[y_key], '-', color=colors[i], label=y_key)
+
+    # create the legend
+    legd = ax.legend(loc='best',fancybox=True,fontsize=12,scatterpoints=3)
+    for text in legd.get_texts():
+        text.set_color('black')
+
+    if display:
+        plt.show()
+    else:
+        if ('.png' not in file_name) and ('.jp' not in file_name) and ('.pdf' not in file_name):
+            file_name = file_name+'.png'
+        plt.savefig(file_name)
     plt.close()
