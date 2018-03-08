@@ -1,3 +1,4 @@
+import os
 import json
 import warnings
 import itertools
@@ -308,50 +309,28 @@ def iterate_out_of_class_probs(start = 30,
             print(sbm.critical_p)
     return bhamidi_scores_plot, bhamidi_medians, purity_scores_plot, purity_medians, agreement_scores_plot, agreement_medians, out_class_probs, epsilons, critical_point, recoverable_point
 
-def save_current_status(file_name = 'current_status_resample_walks',
-                        out_class_probs=[],
-                        bhamidi_scores_plot=[],
-                        purity_scores_plot=[],
-                        agreement_scores_plot=[],
-                        bhamidi_medians=[],
-                        purity_medians=[],
-                        agreement_medians=[],
-                        walk_length = 'N/a',
-                        num_walks = 'N/a',
-                        num_nodes = 'N/a',
-                        n_classes = 'N/a',
-                        in_class_prob = 'N/a',
-                        iterations = 'N/a',
-                        p = 'N/a',
-                        q = 'N/a',
-                        epsilons='N/a',
-                        critical_point='N/a',
-                        recoverable_point='N/a'):
+def save_current_status(file_name='data_from_run',**kwargs):
     # saving current status
-    current_status = {
-                    'iterations' : iterations,
-                    'walk_length' : walk_length,
-                    'num_walks' : num_walks,
-                    'num_nodes' : num_nodes,
-                    'n_classes' : n_classes,
-                    'in_class_prob' : in_class_prob,
-                    'p' : p,
-                    'q' : q,
-                    'bhamidi_scores_plot' : bhamidi_scores_plot,
-                    'bhamidi_medians' : bhamidi_medians,
-                    'purity_scores_plot' : purity_scores_plot,
-                    'purity_medians' : purity_medians,
-                    'agreement_scores_plot' : agreement_scores_plot,
-                    'agreement_medians' : agreement_medians,
-                    'out_class_probs' : out_class_probs,
-                    'epsilons' : epsilons,
-                    'critical_point' : critical_point,
-                    'recoverable_point' : recoverable_point
-                    }
+    file_name = file_name.strip('/').strip('\\')
+    if 'file_name' in set(kwargs.keys()):
+        kwargs.pop('file_name')
     # save to file (as json, obviously)
-    with open(file_name+'.json', 'w') as fp:
-        json.dump(current_status, fp)
-    return current_status
+    if '.json' not in file_name:
+        file_name += '.json'
+    # make sure you find 'data/' directory
+    dir_path = 'data/'
+    if os.path.isdir(dir_path):
+        file_name = dir_path + file_name
+    elif os.path.isdir('../' + dir_path):
+        file_name = '../' + dir_path + file_name
+    elif os.path.isdir('../' + '../' + dir_path):
+        file_name = '../' + '../' + dir_path + file_name
+    else:
+        file_name = '../' + dir_path + file_name
+    os.makedirs(os.path.dirname(file_name), exist_ok=True)
+    with open(file_name, 'w') as fp:
+        json.dump(kwargs, fp)
+    return kwargs
 
 def plot_save_scores(epsilons=[],
                      bhamidi_scores_plot=None,
