@@ -24,54 +24,59 @@ def main():
         print('SIMULATION HAS BEEN PERFORMED. SKIPPING: p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_s{6}'.format(*parameters))
         raise ValueError('Simulation has been run before. Change file_name if wanting to run again.')
 
-    data_to_save = []
+    data_to_save = {}
+    ## PARAMETERS
+    p = parameters[0]
+    data_to_save['p'] = p
+    q = parameters[1]
+    data_to_save['q'] = q
+    walk_length = parameters[2]
+    data_to_save['walk_length'] = walk_length
+    num_walk = parameters[3]
+    data_to_save['num_walk'] = num_walk
+    embedding_size = parameters[4]
+    data_to_save['embedding_size'] = embedding_size
+    num_iter = parameters[5]
+    data_to_save['num_iter'] = num_iter
+    num_nodes = 400
+    data_to_save['num_nodes'] = num_nodes
+    n_classes = 2
+    data_to_save['n_classes'] = n_classes
+    in_class_prob = 0.8
+    data_to_save['in_class_prob'] = in_class_prob
+    iterations = 1
+    data_to_save['iterations'] = iterations
+    samples = 1
+    data_to_save['samples'] = samples
+    # store the labels from the following loop
+    data_to_save['data'] = []
+
+    # for saving purposes; where we store data
+    data_dir = 'data/'
+    if os.path.isdir(data_dir):
+        pass
+    elif os.path.isdir('../' + data_dir):
+        data_dir = '../' + data_dir
+    elif os.path.isdir('../' + '../' + data_dir):
+        data_dir = '../' + '../' + data_dir
+    else:
+        data_dir = '../' + data_dir
+
     for r in range(len(R)):
+        tmp_statuses = []
         for out_class_prob in out_class_probs:
             tmp_status = {}
-            ## PARAMETERS
-            p = parameters[0]
-            tmp_status['p'] = p
-            q = parameters[1]
-            tmp_status['q'] = q
-            walk_length = parameters[2]
-            tmp_status['walk_length'] = walk_length
-            num_walk = parameters[3]
-            tmp_status['num_walk'] = num_walk
-            embedding_size = parameters[4]
-            tmp_status['embedding_size'] = embedding_size
-            num_iter = parameters[5]
-            tmp_status['num_iter'] = num_iter
-            num_nodes = 400
-            tmp_status['num_nodes'] = num_nodes
-            n_classes = 2
-            tmp_status['n_classes'] = n_classes
-            in_class_prob = 0.8
-            tmp_status['in_class_prob'] = in_class_prob
             out_class_prob = out_class_prob
             tmp_status['out_class_prob'] = out_class_prob
-            iterations = 1
-            tmp_status['iterations'] = iterations
-            samples = 1
-            tmp_status['samples'] = samples
 
-            # for saving purposes; where we store data
-            data_dir = 'data/'
-            if os.path.isdir(data_dir):
-                pass
-            elif os.path.isdir('../' + data_dir):
-                data_dir = '../' + data_dir
-            elif os.path.isdir('../' + '../' + data_dir):
-                data_dir = '../' + '../' + data_dir
-            else:
-                data_dir = '../' + data_dir
-
-            block_probs = make_block_probs(in_class_prob=in_class_prob, out_class_prob=out_class_prob)
+            block_probs = make_block_probs(in_class_prob=in_class_prob,
+                                           out_class_prob=out_class_prob
+                                           )
 
             sbm = stochastic_block_model(size=num_nodes,
                                          block_probabilities=block_probs,
                                          num_classes=n_classes
                                          )
-
             node_embeds = node2vec(G=None,
                                    Adj_M=sbm.A,
                                    labels=sbm.memberships,
@@ -89,8 +94,12 @@ def main():
                                    workers=8
                                    )
             true_labels = node_embeds.labels
+            tmp_status['true_labels'] = true_labels
             predicted_labels = node_embeds.predicted_labels
-            # save true and predicted labels
+            tmp_status['predicted_labels'] = predicted_labels
+            tmp_statuses.append(tmp_status)
+        # save data from 
+        data_to_save['data'].append(tmp_statuses)
 
     # save labels
     current_status = save_current_status(file_name = file_name,
