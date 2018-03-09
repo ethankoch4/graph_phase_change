@@ -56,15 +56,14 @@ def main():
         num_walk = combination[3]
         embedding_size = combination[4]
         num_iter = combination[5]
-        
+
         LOG = 'p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_R{6}'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R)
         NAME = '_'.join([str(v) for v in [p,q,walk_length,num_walk,embedding_size,num_iter,R]])
         COMMAND = 'python3 generate_predictions_sampling.py {0} {1} {2} {3} {4} {5} {6}'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R)
-
-        os.system('sbatch -o {0} -t {1} --job-name={2} --mem={3} --wrap={4}'.format(LOG, TIME, NAME, MEM, COMMAND))
+        print('sbatch -o {0} -t {1} --job-name={2} --mem={3} --wrap="{4}"'.format(LOG, TIME, NAME, MEM, COMMAND))
+        os.system('sbatch -o {0} -t {1} --job-name={2} --mem={3} --wrap="{4}"'.format(LOG, TIME, NAME, MEM, COMMAND))
 
 
 print('BEGINNING TO RUN WITH ALL COMBINATIONS.')
-print()
 main()
 print('COMPLETED RUNNING WITH ALL COMBINATIONS.')
