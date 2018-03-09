@@ -10,16 +10,16 @@ def main():
     import itertools
 
     # define values for parameters
-    p_s = [1,2]# [i*0.1 for i in range(1,21)] + [i*0.5 for i in range(5,11)]
-    q_s = [1,2]# [i*0.1 for i in range(1,21)] + [i*0.5 for i in range(5,11)]
+    p_s = [i*0.1 for i in range(1,21)] + [i*0.5 for i in range(5,11)]
+    q_s = [i*0.1 for i in range(1,21)] + [i*0.5 for i in range(5,11)]
     print('Values of p,q are:\n {0}'.format(p_s))
-    walk_lengths = [1,2]# [i for i in range(1,5)] + [i*5 for i in range(1,11)]
+    walk_lengths = [i for i in range(1,5)] + [i*5 for i in range(1,11)]
     print('Values of walk_length are:\n {0}'.format(walk_lengths))
-    num_walks = [1,2]# [1, 5] + [i*10 for i in range(1,21)]
+    num_walks = [1, 5] + [i*10 for i in range(1,21)]
     print('Values of num_walk are:\n {0}'.format(num_walks))
-    embedding_sizes = [1,2]# [10] + [i*25 for i in range(1,9)]
+    embedding_sizes = [i*25 for i in range(1,9)]
     print('Values of embedding_size are:\n {0}'.format(embedding_sizes))
-    num_iters = [1,2]# [2, 4, 8]
+    num_iters = [2, 4, 8]
     print('Values of num_iter are:\n {0}'.format(num_iters))
 
     # used later
@@ -57,7 +57,7 @@ def main():
         embedding_size = combination[4]
         num_iter = combination[5]
 
-        LOG = 'p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_R{6}'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R)
+        LOG = 'p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_R{6}.log'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R)
         NAME = '_'.join([str(v) for v in [p,q,walk_length,num_walk,embedding_size,num_iter,R]])
         COMMAND = 'python3 generate_predictions_sampling.py {0} {1} {2} {3} {4} {5} {6}'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R)
         print('sbatch -o {0} -t {1} --job-name={2} --mem={3} --wrap="{4}"'.format(LOG, TIME, NAME, MEM, COMMAND))

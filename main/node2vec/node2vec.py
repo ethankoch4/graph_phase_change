@@ -48,6 +48,7 @@ class node2vec(object):
                                            sg=sg,
                                            workers=workers
                                            )
+        self.labels = labels
         if evaluate:
             self.kmeans_evaluate(self.model,
                                  labels=labels,

@@ -3,7 +3,9 @@ def main():
     import sys
     import os
 
-    from utilities import iterate_out_of_class_probs, save_current_status, plot_save_scores, multiple_sbm_iterate, score_auc
+    from utilities import make_block_probs, save_current_status
+    from sbm.sbm import stochastic_block_model
+    from node2vec.node2vec import node2vec
     import warnings
     warnings.filterwarnings('ignore')
     warnings.simplefilter('ignore')
@@ -17,12 +19,6 @@ def main():
 
     # to be interated over
     out_class_probs = [round(i*0.01, ROUND_TO) for i in range(1,80)]
-
-    # dont do the same thing twice
-    file_name = 'p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_R{6}.json'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R).format(in_class_prob,walk_length)
-    if os.path.isfile(data_dir + file_name):
-        print('SIMULATION HAS BEEN PERFORMED. SKIPPING: p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_s{6}'.format(*parameters))
-        raise ValueError('Simulation has been run before. Change file_name if wanting to run again.')
 
     data_to_save = {}
     ## PARAMETERS
@@ -62,7 +58,13 @@ def main():
     else:
         data_dir = '../' + data_dir
 
-    for r in range(len(R)):
+    # dont do the same thing twice
+    file_name = 'p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_R{6}.json'.format(p, q, walk_length, num_walk, embedding_size, num_iter, R).format(in_class_prob,walk_length)
+    if os.path.isfile(data_dir + file_name):
+        print('SIMULATION HAS BEEN PERFORMED. SKIPPING: p{0}_q{1}_wl{2}_nw{3}_es{4}_ni{5}_s{6}'.format(*parameters))
+        raise ValueError('Simulation has been run before. Change file_name if wanting to run again.')
+
+    for r in range(R):
         tmp_statuses = []
         for out_class_prob in out_class_probs:
             tmp_status = {}
@@ -85,7 +87,7 @@ def main():
                                    p=p,
                                    q=q,
                                    walk_length=walk_length,
-                                   num_walks=num_walks,
+                                   num_walks=num_walk,
                                    window_size=5,
                                    embedding_size=embedding_size,
                                    num_iter=num_iter,
