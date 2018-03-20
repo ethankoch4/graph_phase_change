@@ -1,0 +1,1 @@
+{"data": {"walk_length": 1, "n_classes": 2, "embedding_size": 2, "num_nodes": 400, "num_iter": 1, "samples": 1, "in_class_prob": 0.8, "data": [[{"predicted_labels": [

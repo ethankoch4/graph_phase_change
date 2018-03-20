@@ -1,0 +1,1 @@
+{"data": {"num_walk": 2, "embedding_size": 1, "samples": 1, "p": 1.0, "in_class_prob": 0.8, "num_nodes": 400, "iterations": 1, "q": 1.0, "walk_length": 1, "n_classes": 2, "data": [[{"out_class_prob": 0.01, "true_labels": 
