@@ -441,6 +441,7 @@ q : {7}'''.format(walk_length, num_walks, num_nodes, n_classes, round(in_class_p
             file_name = file_name+'.png'
         plt.savefig(file_name)
     plt.close()
+    return fig, ax
 
 def plot_vs_parameter(file_name='walk_len_plot', param_values={}, y_values={}, display=False):
     '''
@@ -483,3 +484,4 @@ def plot_vs_parameter(file_name='walk_len_plot', param_values={}, y_values={}, d
             file_name = file_name+'.png'
         plt.savefig(file_name)
     plt.close()
+    return fig, ax
